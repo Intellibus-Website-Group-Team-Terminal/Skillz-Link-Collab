@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SkillLink — Secure Access</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+    <!-- Firebase (compat builds) -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-storage-compat.js"></script>
+
+
+    <style>
+      :root {
+        --bg: #f6f8fb;
+        --card: #fff;
+        --txt: #1f2937;
+        --muted: #6b7280;
+        --accent: #2563eb;
+        --chip: #eef2ff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: system-ui, Arial;
+        margin: 0;
+        background: var(--bg);
+        color: var(--txt);
+      }
+      .wrap {
+        max-width: 1100px;
+        margin: 24px auto;
+        padding: 0 16px;
+        display: none;
+      }
+      #authPage {
+        display: none;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin: 0 0 8px;
+      }
+      h2 {
+        font-size: 1.25rem;
+        margin: 24px 0 12px;
+      }
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin: 4px 0 16px;
+        flex-wrap: wrap;
+      }
+      .tab {
+        background: #e5e7eb;
+        color: #111827;
+        padding: 8px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+        border: 0;
+      }
+      .tab.active {
+        background: var(--accent);
+        color: #fff;
+      }
+      .card {
+        background: var(--card);
+        border-radius: 14px;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+        padding: 16px;
+        margin: 12px 0;
+      }
+      label {
+        display: block;
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-top: 10px;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        margin-top: 6px;
+        background: #fff;
+      }
+      textarea {
+        resize: vertical;
+      }
+      button {
+        background: var(--accent);
+        color: #fff;
+        padding: 10px 14px;
+        border: 0;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      button.ghost {
+        background: #eef2ff;
+        color: #1f2937;
+      }
+      button.danger {
+        background: #ef4444;
+      }
+      .hidden {
+        display: none !important;
+      }
+      #notifyArea {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 10;
+      }
+      .toast {
+        background: #111827;
+        color: #fff;
+        padding: 10px 12px;
+        border-radius: 10px;
+        opacity: 0.95;
+      }
+      #logoutBtn {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 100;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="notifyArea"></div>
+
+
+    <!-- ===== AUTH PAGE ===== -->
+    <section id="authPage">
+      <div class="card" style="max-width: 400px; margin: 50px auto">
+        <h2 id="authTitle">Login</h2>
+        <form id="authForm">
+          <label>Email</label>
+          <input type="email" id="authEmail" required />
+
+
+          <label>Password</label>
+          <input type="password" id="authPassword" required />
+
+
+          <div id="signupExtra" class="hidden">
+            <label>Name</label>
+            <input type="text" id="authName" placeholder="Your full name" />
+
+
+            <label>Contact Info</label>
+            <input
+              type="text"
+              id="authContact"
+              placeholder="Phone or address"
+            />
+
+
+            <label>Sign up as</label>
+            <select id="authRole">
+              <option value="employee">Employee</option>
+              <option value="employer">Employer</option>
+            </select>
+          </div>
+
+
+          <button type="submit" id="authSubmit">Login</button>
+        </form>
+
+
+        <p style="margin-top: 10px">
+          <a href="#" id="toggleAuthMode">Sign up</a>
+        </p>
+        <p><a href="#" id="resetPassLink">Forgot Password?</a></p>
+      </div>
+    </section>
+
+
+    <!-- ===== MAIN APP ===== -->
+    <button id="logoutBtn" class="hidden">Logout</button>
+    <div class="wrap">
+      <h1>SkillLink — Dashboard</h1>
+
+
+      <div class="tabs">
+        <button id="tabEmployee" class="tab active">Employee Page</button>
+        <button id="tabEmployer" class="tab">Employer Page</button>
+      </div>
+
+
+      <p class="muted" id="whoami">Welcome.</p>
+
+
+      <section id="employeePortal" class="">
+        <div class="card">
+          <h2>Employee Portal</h2>
+          <p>This is the employee dashboard — available after login.</p>
+        </div>
+      </section>
+
+
+      <section id="employerPortal" class="hidden">
+        <div class="card">
+          <h2>Employer Portal</h2>
+          <p>This is the employer dashboard — available after login.</p>
+        </div>
+      </section>
+    </div>
+
+
+    <script>
+      /* ==================== Firebase CONFIG ==================== */
+      const firebaseConfig = {
+        apiKey: 'YOUR_API_KEY',
+        authDomain: 'YOUR_AUTH_DOMAIN',
+        projectId: 'YOUR_PROJECT_ID',
+        storageBucket: 'YOUR_STORAGE_BUCKET',
+        messagingSenderId: 'YOUR_SENDER_ID',
+        appId: 'YOUR_APP_ID',
+      };
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+      const storage = firebase.storage();
+
+
+      const byId = (id) => document.getElementById(id);
+      const toast = (msg) => {
+        const box = byId('notifyArea');
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.textContent = msg;
+        box.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+      };
+
+
+      const authPage = byId('authPage');
+      const wrap = document.querySelector('.wrap');
+      const signupExtra = byId('signupExtra');
+      let isSignup = false;
+      let CURRENT_ROLE = '';
+
+
+      /* ==================== AUTH FLOW ==================== */
+      byId('toggleAuthMode').addEventListener('click', (e) => {
+        e.preventDefault();
+        isSignup = !isSignup;
+        byId('authTitle').textContent = isSignup ? 'Sign Up' : 'Login';
+        byId('authSubmit').textContent = isSignup ? 'Sign Up' : 'Login';
+        byId('toggleAuthMode').textContent = isSignup
+          ? 'Already have an account? Login'
+          : 'Need an account? Sign up';
+        signupExtra.classList.toggle('hidden', !isSignup);
+      });
+
+
+      byId('authForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = byId('authEmail').value.trim();
+        const pass = byId('authPassword').value.trim();
+
+
+        if (isSignup) {
+          const name = byId('authName').value.trim();
+          const contact = byId('authContact').value.trim();
+          const role = byId('authRole').value;
+          if (!name || !contact) return alert('Please enter name and contact.');
+          try {
+            const cred = await auth.createUserWithEmailAndPassword(email, pass);
+            const uid = cred.user.uid;
+            await db
+              .collection('users')
+              .doc(uid)
+              .set({ uid, email, name, contact, role, createdAt: new Date() });
+            toast('Account created successfully!');
+          } catch (err) {
+            alert('Signup failed: ' + err.message);
+          }
+        } else {
+          try {
+            await auth.signInWithEmailAndPassword(email, pass);
+            toast('Welcome back!');
+          } catch (err) {
+            alert('Login failed: ' + err.message);
+          }
+        }
+      });
+
+
+      byId('resetPassLink').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = prompt('Enter your email to reset password:');
+        if (email) {
+          try {
+            await auth.sendPasswordResetEmail(email);
+            alert('Password reset email sent!');
+          } catch (err) {
+            alert('Error: ' + err.message);
+          }
+        }
+      });
+
+
+      byId('logoutBtn').addEventListener('click', async () => {
+        await auth.signOut();
+        toast('Logged out.');
+      });
+
+
+      /* ==================== ROLE ROUTING ==================== */
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          const doc = await db.collection('users').doc(user.uid).get();
+          const data = doc.data() || {};
+          CURRENT_ROLE = data.role || 'employee';
+
+
+          authPage.style.display = 'none';
+          wrap.style.display = 'block';
+          byId('logoutBtn').classList.remove('hidden');
+
+
+          if (CURRENT_ROLE === 'employer') {
+            byId('employeePortal').classList.add('hidden');
+            byId('employerPortal').classList.remove('hidden');
+            byId('whoami').textContent = `Logged in as Employer: ${
+              data.name || 'Unknown'
+            }`;
+          } else {
+            byId('employerPortal').classList.add('hidden');
+            byId('employeePortal').classList.remove('hidden');
+            byId('whoami').textContent = `Logged in as Employee: ${
+              data.name || 'Unknown'
+            }`;
+          }
+        } else {
+          authPage.style.display = 'block';
+          wrap.style.display = 'none';
+          byId('logoutBtn').classList.add('hidden');
+        }
+      });
+    </script>
+  </body>
+</html>
