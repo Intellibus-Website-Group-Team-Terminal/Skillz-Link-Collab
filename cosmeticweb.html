@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SkillzLink — Bridging Opportunity. Building Skillz.</title>
+
+  <!-- Firebase (compat builds) -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-storage-compat.js"></script>
+
+  <style>
+    :root {
+      --turquoise:#26c6da;
+      --blue:#1a73e8;
+      --green:#22c55e;
+      --purple:#7c3aed;
+      --red:#ef4444;
+      --surface:#0b1020;
+      --border:rgba(255,255,255,.08);
+      --muted:#a9b7d6;
+      --text:#eaf5ff;
+      --white:#fff;
+      --accent:var(--blue);
+      --maxw:1100px;
+      --card-bg:rgba(255,255,255,.06);
+    }
+
+    html,body {
+      margin:0; padding:0; height:100%;
+      font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      background:var(--surface);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    * { box-sizing:border-box; }
+
+    /* 🌈 Animated Bubble Background */
+    .bubbles {
+      position:fixed; inset:-10vh -10vw;
+      z-index:0; opacity:0.35; filter:blur(40px);
+      background:
+        radial-gradient(140px 140px at 20% 30%, rgba(38,198,218,.55), transparent 65%),
+        radial-gradient(180px 180px at 80% 20%, rgba(239,68,68,.45), transparent 60%),
+        radial-gradient(160px 160px at 30% 80%, rgba(34,197,94,.45), transparent 60%),
+        radial-gradient(130px 130px at 90% 70%, rgba(124,58,237,.45), transparent 60%);
+      animation: drift 30s linear infinite;
+    }
+    @keyframes drift {
+      0% { transform:translate(0,0); }
+      50% { transform:translate(1.5vw,-1.5vh); }
+      100% { transform:translate(0,0); }
+    }
+
+    /* 🔝 Navbar */
+    header {
+      position:sticky; top:0;
+      background:rgba(11,16,32,.85);
+      backdrop-filter:blur(10px);
+      border-bottom:1px solid var(--border);
+      z-index:10;
+    }
+    .nav {
+      max-width:var(--maxw);
+      margin:0 auto;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:14px 20px;
+    }
+    .brand {
+      display:flex; align-items:center; gap:10px;
+      font-weight:700; color:var(--white);
+      text-decoration:none; font-size:1.2rem;
+    }
+    .brand-logo { width:34px; height:34px; }
+    .nav a {
+      color:var(--white); text-decoration:none; margin-left:20px;
+      opacity:.9; cursor:pointer;
+    }
+    .nav a.active,.nav a:hover { opacity:1; text-decoration:underline; }
+
+    /* 🦋 Hero */
+    .hero {
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      text-align:center; height:78vh; padding:0 20px;
+      position:relative; z-index:1;
+    }
+    .hero h1 {
+      font-size:clamp(2.5rem,6vw,5rem); margin:0;
+      background:linear-gradient(90deg,var(--turquoise),var(--red),var(--green),var(--purple));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      font-weight:800;
+    }
+    .hero p { font-size:1.25rem; margin-top:14px; color:#eaf5ff; opacity:.9; }
+
+    /* 🧩 Common Sections */
+    section { max-width:var(--maxw); margin:0 auto; padding:60px 20px; position:relative; z-index:1; }
+    h2 { text-align:center; font-size:clamp(1.8rem,3vw,2.2rem); margin-bottom:10px; }
+    p.center { max-width:760px; margin:0 auto 20px; color:#d9e7ff; opacity:.9; text-align:center; }
+
+    footer {
+      text-align:center; padding:40px 20px; color:var(--muted);
+      background:rgba(11,16,32,.8); border-top:1px solid var(--border);
+      position:relative; z-index:2;
+    }
+    .page { display:none; }
+    .active-page { display:block; }
+
+    /* 🪶 Card + Inputs */
+    .card {
+      background:var(--card-bg);
+      border:1px solid var(--border);
+      border-radius:14px;
+      padding:24px; margin:20px 0; position:relative; z-index:2;
+    }
+    label { display:block; font-size:.9rem; color:#a7b4d6; margin-top:10px; margin-bottom:4px; }
+    input, select, textarea {
+      width:100%; padding:12px 14px;
+      border:1px solid var(--border);
+      border-radius:10px; background:#0c1228; color:var(--text);
+      font-size:1rem; box-sizing:border-box;
+    }
+    input:focus, select:focus, textarea:focus { outline:2px solid var(--accent); }
+    textarea { resize:vertical; }
+    select[multiple] { height:120px; }
+    button {
+      background:var(--accent); color:#fff; padding:10px 16px;
+      border:0; border-radius:10px; cursor:pointer; font-weight:500;
+    }
+    button:hover { opacity:.9; }
+    button.ghost { background:#121a39; color:#e5edff; border:1px solid var(--border); }
+    .row { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; }
+
+    /* 🔘 Tabs & Chips */
+    .tabs { display:flex; gap:8px; margin:4px 0 16px; justify-content:center; flex-wrap:wrap; }
+    .tab {
+      background:#121a39; color:#e5edff; padding:8px 12px;
+      border-radius:999px; cursor:pointer; border:1px solid var(--border);
+    }
+    .tab.active { background:var(--accent); color:#fff; border-color:transparent; }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+    .chip {
+      border:1px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.08);
+      color:var(--text); border-radius:999px;
+      padding:6px 10px; font-size:.9rem; cursor:pointer;
+      transition:background .2s,border .2s;
+    }
+    .chip.selected { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .hint { color:#8ca0c0; display:block; margin-top:6px; font-size:.85rem; }
+    .hidden { display:none!important; }
+  </style>
+</head>
+
+<body>
+  <div class="bubbles" aria-hidden="true"></div>
+
+  <!-- HEADER -->
+  <header>
+    <div class="nav">
+      <a class="brand" id="navBrand">
+        <svg class="brand-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+          <path fill="#26c6da" d="M2 42h60v4H2z"/>
+          <path fill="#1a73e8" d="M10 42c0-10 10-18 22-18s22 8 22 18h4c0-12-12-22-26-22S6 30 6 42h4z"/>
+          <circle cx="32" cy="20" r="4" fill="#7c3aed"/>
+          <rect x="12" y="42" width="4" height="8" fill="#22c55e"/>
+          <rect x="48" y="42" width="4" height="8" fill="#22c55e"/>
+        </svg>
+        SkillzLink
+      </a>
+      <nav>
+        <a id="link-home" class="active">Home</a>
+        <a id="link-skills">Skills</a>
+        <a id="link-portal">Portal</a>
+        <a id="link-contact">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <main id="home" class="page active-page">
+    <section class="hero">
+      <h1>SkillzLink</h1>
+      <p>Bridging Opportunity. Building Skillz.</p>
+    </section>
+  </main>
+
+  <!-- SKILLS -->
+  <main id="skills" class="page">
+    <section>
+      <h2>Find Skillz Training</h2>
+      <p class="center">Search for skill-building opportunities — online or in person.</p>
+      <div style="max-width:800px;margin:20px auto;">
+        <input id="skillSearch" placeholder="Try 'IT Coding', 'Cooking', 'Carpentry'..." />
+        <div id="skillResults"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- PORTAL -->
+  <main id="portal" class="page">
+    <section>
+      <h2>Portal</h2>
+      <div class="tabs">
+        <button id="tabEmployee" class="tab active">Employee</button>
+        <button id="tabEmployer" class="tab">Employer</button>
+      </div>
+
+      <!-- EMPLOYEE PAGE -->
+      <section id="employeePortal">
+        <div class="card">
+          <h3>Employee — Create / Update Profile</h3>
+          <form id="profileForm">
+            <div class="row">
+              <div><label>Name</label><input type="text" name="name" required></div>
+              <div><label>Contact</label><input type="text" name="contact" required></div>
+            </div>
+            <div class="row">
+              <div><label>Age</label><input type="number" min="15" max="29" name="age" required><span class="hint">You must be 15–29 to apply.</span></div>
+              <div><label>Location</label><input type="text" placeholder="Kingston" name="location"></div>
+            </div>
+            <div class="row">
+              <div><label>Skills you have</label><input name="skills" placeholder="coding, teamwork" required></div>
+              <div>
+                <label>Skills you want to learn</label>
+                <div id="desiredSkillsChips" class="chips">
+                  <button type="button" class="chip">coding</button>
+                  <button type="button" class="chip">leadership</button>
+                  <button type="button" class="chip">design</button>
+                  <button type="button" class="chip">tech</button>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div><label>Education Level</label><input type="text" name="education"></div>
+              <div><label>Experience</label><input type="text" name="experience"></div>
+            </div>
+            <label>Resume (PDF)</label><input type="file" name="resume" accept=".pdf" />
+            <div style="margin-top:12px;">
+              <button type="submit">Save Profile</button>
+              <button type="button" class="ghost">Load Profile</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- EMPLOYER PAGE -->
+      <section id="employerPortal" class="hidden">
+        <div class="card">
+          <h3>Employer — Create Program</h3>
+          <form id="programForm">
+            <div class="row">
+              <div><label>Program Name</label><input name="title" required></div>
+              <div><label>Company / Group</label><input name="company" required></div>
+            </div>
+            <label>Description</label>
+            <textarea name="description" rows="3" required></textarea>
+            <div class="row">
+              <div><label>Requirements</label><input name="requirements"></div>
+              <div><label>Skills Needed</label><input name="skills"></div>
+            </div>
+            <div class="row">
+              <div><label>Location</label><input name="location"></div>
+              <div><label>Duration</label><input name="duration"></div>
+            </div>
+            <label>Curriculum PDF</label><input type="file" name="curriculum" accept=".pdf" />
+            <div style="margin-top:12px;"><button type="submit">Create Program</button></div>
+          </form>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- CONTACT -->
+  <main id="contact" class="page">
+    <section>
+      <h2>Contact</h2>
+      <p class="center">Send us a message.</p>
+      <div class="card" style="max-width:760px;margin:0 auto;">
+        <form id="contactForm">
+          <div class="row">
+            <div><label>Name</label><input name="name" required></div>
+            <div><label>Email</label><input name="email" type="email" required></div>
+          </div>
+          <label>Message</label><textarea name="message" rows="4" required></textarea>
+          <div style="margin-top:10px"><button type="submit">Send</button></div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © <span id="year"></span> SkillzLink. All rights reserved.<br>
+    <small>Open: Mon – Sun • 9:45 AM – 3:45 PM</small>
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const pages = ["home","skills","portal","contact"];
+      const links = {};
+      pages.forEach(p => links[p] = document.getElementById("link-" + p));
+
+      function showPage(id) {
+        pages.forEach(p => {
+          const page = document.getElementById(p);
+          const link = links[p];
+          if (page) page.classList.toggle("active-page", p === id);
+          if (link) link.classList.toggle("active", p === id);
+        });
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      pages.forEach(p => {
+        const link = links[p];
+        if (link) link.addEventListener("click", () => showPage(p));
+      });
+
+      document.getElementById("navBrand").addEventListener("click", () => showPage("home"));
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      // Portal Tabs
+      const tabEmp = document.getElementById("tabEmployee");
+      const tabEr = document.getElementById("tabEmployer");
+      const empPage = document.getElementById("employeePortal");
+      const erPage = document.getElementById("employerPortal");
+
+      function togglePortal(which) {
+        const isEmp = which === "employee";
+        tabEmp.classList.toggle("active", isEmp);
+        tabEr.classList.toggle("active", !isEmp);
+        empPage.classList.toggle("hidden", !isEmp);
+        erPage.classList.toggle("hidden", isEmp);
+      }
+
+      tabEmp.addEventListener("click", () => togglePortal("employee"));
+      tabEr.addEventListener("click", () => togglePortal("employer"));
+
+      // Skills Search Demo
+      const SAMPLE_SKILLS = [
+        { title: "Intro to Coding", provider: "HEART/NSTA", location: "Kingston" },
+        { title: "Digital Marketing", provider: "SkillUp", location: "Online" },
+        { title: "Culinary Basics", provider: "Culinary JA", location: "Ocho Rios" }
+      ];
+      const skillSearch = document.getElementById("skillSearch");
+      const list = document.getElementById("skillResults");
+      if (skillSearch) {
+        skillSearch.addEventListener("input", () => {
+          const q = skillSearch.value.toLowerCase();
+          list.innerHTML = "";
+          SAMPLE_SKILLS.filter(s => s.title.toLowerCase().includes(q)
+            || s.provider.toLowerCase().includes(q)
+            || s.location.toLowerCase().includes(q))
+            .forEach(s => {
+              const div = document.createElement("div");
+              div.className = "card";
+              div.innerHTML = `<h3>${s.title}</h3><p>${s.provider} — ${s.location}</p>`;
+              list.appendChild(div);
+            });
+        });
+      }
+    });
+  </script>
+</body>
+</html>
